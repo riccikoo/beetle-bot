@@ -181,14 +181,49 @@
     }
 
     // Panggil readData() setelah sukses Connect
-    document.getElementById('connect-btn').addEventListener('click', async () => {
-        try {
-            port = await navigator.serial.requestPort();
-            await port.open({ baudRate: 115200 });
-            writer = port.writable.getWriter();
-            document.getElementById('connect-btn').innerText = "SYSTEM ONLINE";
-            readData(); // MULAI MEMBACA DATA DARI ESP32
-        } catch (e) { console.log(e); }
+    // document.getElementById('connect-btn').addEventListener('click', async () => {
+    //     try {
+    //         port = await navigator.serial.requestPort();
+    //         await port.open({ baudRate: 115200 });
+    //         writer = port.writable.getWriter();
+    //         document.getElementById('connect-btn').innerText = "SYSTEM ONLINE";
+    //         readData(); // MULAI MEMBACA DATA DARI ESP32
+    //     } catch (e) { console.log(e); }
+    // });
+
+    let socket;
+
+    // Ganti dengan IP Address yang muncul di Serial Monitor ESP32 nanti
+    const gateway = `ws://192.168.4.1/ws`; 
+
+    function initWebSocket() {
+        console.log('Trying to open a WebSocket connection...');
+        socket = new WebSocket(gateway);
+        
+        socket.onopen = () => {
+            document.getElementById('connect-btn').innerText = "SYSTEM ONLINE (WiFi)";
+            document.getElementById('connect-btn').style.background = "#ffffff";
+            readData(); // Mulai fungsi baca data
+        };
+
+        socket.onmessage = (event) => {
+            // Menerima data dari ESP32 (Ultrasonic)
+            if (event.data.startsWith("U:")) {
+                const dist = event.data.split(":")[1];
+                updateUltrasonicUI(parseInt(dist));
+            }
+        };
+    }
+
+    // Fungsi kirim data diubah dari writer.write ke socket.send
+    async function sendData(msg) {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(msg);
+        }
+    }
+
+    document.getElementById('connect-btn').addEventListener('click', () => {
+        initWebSocket();
     });
 </script>
 </body>
