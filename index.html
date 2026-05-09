@@ -17,7 +17,7 @@
 
         /* Calibration Grid */
         .grid-cal { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 1200px; margin: auto; }
-        .servo-card { border: 1px solid var(--gray); padding: 20px; border-radius: 4px; }
+        .servo-card { border: 1px solid var(--gray); padding: 20px; border-radius: 4px; font-variant-numeric: tabular-nums;}
         input[type=range] { width: 100%; accent-color: rgb(0, 0, 0); margin-top: 15px; cursor: pointer; }
         
         /* Controller - Clean Look */
@@ -79,9 +79,10 @@
 <button id="connect-btn">INITIALIZE SERIAL</button>
 
 <script>
-    let port, writer;
+    let socket;
+    const gateway = `ws://192.168.4.1/ws`; 
 
-    // Generate 10 Sliders (8 Legs + 2 Claws)
+    // Generate 10 Sliders
     const container = document.getElementById('servo-sliders');
     for(let i=1; i<=10; i++) {
         const name = i <= 8 ? `LEG_${i}` : `CLAW_${i-8}`;
@@ -97,7 +98,33 @@
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
+        // Perbaikan: gunakan event target atau id untuk aktivasi tombol
+        if(id === 'calibration') document.getElementById('btn-nav-cal').classList.add('active');
+        else document.getElementById('btn-nav-ctrl').classList.add('active');
+    }
+
+    function initWebSocket() {
+        socket = new WebSocket(gateway);
+        socket.onopen = () => {
+            document.getElementById('connect-btn').innerText = "SYSTEM ONLINE (WiFi)";
+            document.getElementById('connect-btn').style.background = "#000000";
+            document.getElementById('connect-btn').style.color = "#ffffff";
+        };
+        socket.onmessage = (event) => {
+            if (event.data.startsWith("U:")) {
+                updateUltrasonicUI(parseInt(event.data.split(":")[1]));
+            }
+        };
+        socket.onclose = () => {
+            document.getElementById('connect-btn').innerText = "OFFLINE - RECONNECT?";
+            setTimeout(initWebSocket, 2000); // Auto reconnect
+        };
+    }
+
+    async function sendData(msg) {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(msg);
+        }
     }
 
     async function updateServo(id, val) {
@@ -105,29 +132,21 @@
         sendData(`S${id}:${val}`);
     }
 
-    document.getElementById('connect-btn').addEventListener('click', async () => {
-        try {
-            port = await navigator.serial.requestPort();
-            await port.open({ baudRate: 115200 });
-            writer = port.writable.getWriter();
-            document.getElementById('connect-btn').innerText = "SYSTEM ONLINE";
-        } catch (e) { console.log(e); }
-    });
-
-    async function sendData(msg) {
-        if (writer) {
-            const encoder = new TextEncoder();
-            await writer.write(encoder.encode(msg + "\n"));
-        }
+    function updateUltrasonicUI(cm) {
+        document.getElementById('ultra-val').innerHTML = `${cm}<span style="font-size: 18px;"> cm</span>`;
+        let percent = Math.min(cm, 100);
+        document.getElementById('ultra-bar').style.width = percent + "%";
+        document.getElementById('ultra-val').style.color = (cm < 10) ? "#ff4444" : "black";
     }
 
+    // Keyboard Logic
     const keyMap = {
         'ArrowUp': 'MOVE_F', 'ArrowDown': 'MOVE_B', 'ArrowLeft': 'MOVE_L', 'ArrowRight': 'MOVE_R',
         'q': 'CLAW_OPEN', 'e': 'CLAW_CLOSE', 'a': 'ROT_L', 'd': 'ROT_R'
     };
 
     window.addEventListener('keydown', (e) => {
-        const cmd = keyMap[e.key];
+        const cmd = keyMap[e.key] || keyMap[e.key.toLowerCase()];
         if(cmd && !e.repeat) {
             const id = e.key.startsWith('Arrow') ? `key-${e.key.replace('Arrow','')}` : `key-${e.key.toLowerCase()}`;
             document.getElementById(id)?.classList.add('active');
@@ -136,7 +155,7 @@
     });
 
     window.addEventListener('keyup', (e) => {
-        const cmd = keyMap[e.key];
+        const cmd = keyMap[e.key] || keyMap[e.key.toLowerCase()];
         if(cmd) {
             const id = e.key.startsWith('Arrow') ? `key-${e.key.replace('Arrow','')}` : `key-${e.key.toLowerCase()}`;
             document.getElementById(id)?.classList.remove('active');
@@ -144,87 +163,7 @@
         }
     });
 
-    async function readData() {
-        while (port && port.readable) {
-            const reader = port.readable.getReader();
-            try {
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-                    
-                    const decoded = new TextDecoder().decode(value);
-                    // Asumsi ESP32 ngirim data format "U:jarak" (contoh: "U:25")
-                    if (decoded.startsWith("U:")) {
-                        const dist = decoded.split(":")[1];
-                        updateUltrasonicUI(parseInt(dist));
-                    }
-                }
-            } catch (error) { console.error(error); } 
-            finally { reader.releaseLock(); }
-        }
-    }
-
-    function updateUltrasonicUI(cm) {
-        // Update angka
-        document.getElementById('ultra-val').innerHTML = `${cm}<span style="font-size: 18px;"> cm</span>`;
-        
-        // Update bar (maksimal 100cm untuk visualisasi)
-        let percent = Math.min(cm, 100);
-        document.getElementById('ultra-bar').style.width = percent + "%";
-        
-        // Efek visual kalau terlalu dekat (< 10cm)
-        if(cm < 10) {
-            document.getElementById('ultra-val').style.color = "#ff4444"; // Sedikit aksen error/warning
-        } else {
-            document.getElementById('ultra-val').style.color = "white";
-        }
-    }
-
-    // Panggil readData() setelah sukses Connect
-    // document.getElementById('connect-btn').addEventListener('click', async () => {
-    //     try {
-    //         port = await navigator.serial.requestPort();
-    //         await port.open({ baudRate: 115200 });
-    //         writer = port.writable.getWriter();
-    //         document.getElementById('connect-btn').innerText = "SYSTEM ONLINE";
-    //         readData(); // MULAI MEMBACA DATA DARI ESP32
-    //     } catch (e) { console.log(e); }
-    // });
-
-    let socket;
-
-    // Ganti dengan IP Address yang muncul di Serial Monitor ESP32 nanti
-    const gateway = `ws://192.168.4.1/ws`; 
-
-    function initWebSocket() {
-        console.log('Trying to open a WebSocket connection...');
-        socket = new WebSocket(gateway);
-        
-        socket.onopen = () => {
-            document.getElementById('connect-btn').innerText = "SYSTEM ONLINE (WiFi)";
-            document.getElementById('connect-btn').style.background = "#ffffff";
-            readData(); // Mulai fungsi baca data
-        };
-
-        socket.onmessage = (event) => {
-            // Menerima data dari ESP32 (Ultrasonic)
-            if (event.data.startsWith("U:")) {
-                const dist = event.data.split(":")[1];
-                updateUltrasonicUI(parseInt(dist));
-            }
-        };
-    }
-
-    // Fungsi kirim data diubah dari writer.write ke socket.send
-    async function sendData(msg) {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(msg);
-        }
-    }
-
-    document.getElementById('connect-btn').addEventListener('click', () => {
-        initWebSocket();
-    });
+    document.getElementById('connect-btn').addEventListener('click', initWebSocket);
 </script>
 </body>
 </html>
