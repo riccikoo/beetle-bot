@@ -1,83 +1,141 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Quadruped Commander</title>
+    <meta charset="UTF-8">
+    <title>Quadruped Spider Command</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; }
-        .container { display: flex; gap: 40px; padding: 20px; }
+        :root { --neon: #00ffcc; --bg: #121212; --card: #1e1e1e; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; overflow: hidden; }
+        
+        /* Navigation */
+        nav { background: #000; padding: 15px; display: flex; justify-content: center; gap: 20px; border-bottom: 2px solid var(--neon); }
+        nav button { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 8px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        nav button.active { background: var(--neon); color: black; }
+
+        .page { display: none; padding: 20px; height: 90vh; box-sizing: border-box; }
+        .page.active { display: flex; flex-direction: column; align-items: center; }
+
+        /* Calibration Grid */
+        .grid-calibration { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; max-width: 1000px; }
+        .servo-card { background: var(--card); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #333; }
+        
+        /* Controller Layout */
+        .controller-layout { display: flex; gap: 50px; align-items: center; margin-top: 30px; }
         .arrow-grid { display: grid; grid-template-columns: repeat(3, 80px); gap: 10px; }
-        .key { width: 80px; height: 80px; background: #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: 0.1s; border: 2px solid #555; }
-        .active { background: #00ffcc; color: black; box-shadow: 0 0 20px #00ffcc; transform: scale(1.1); }
-        .slider-card { background: #2a2a2a; padding: 15px; border-radius: 10px; margin-bottom: 10px; width: 300px; }
-        input[type=range] { width: 100%; }
-        button { padding: 10px 20px; cursor: pointer; background: #00ffcc; border: none; border-radius: 5px; font-weight: bold; }
+        .key { width: 80px; height: 80px; background: #333; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 24px; border: 2px solid #444; transition: 0.1s; }
+        .key.active { background: var(--neon); color: black; box-shadow: 0 0 20px var(--neon); transform: scale(1.1); }
+        
+        .claw-controls { display: flex; flex-direction: column; gap: 20px; }
+        .btn-claw { width: 120px; height: 60px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; background: #444; color: white; }
+        .btn-claw.active { background: #ff4444; box-shadow: 0 0 15px #ff4444; }
+
+        #connect-btn { position: fixed; bottom: 20px; right: 20px; padding: 15px 25px; border-radius: 50px; background: var(--neon); border: none; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,255,204,0.3); }
     </style>
 </head>
 <body>
-    <h1>🕷️ QUADRUPED COMMANDER</h1>
-    <button id="connect">CONNECT TO ESP32</button>
-    <p id="status">Status: Disconnected</p>
 
-    <div class="container">
+<nav>
+    <button id="btn-nav-cal" class="active" onclick="showPage('calibration')">CALIBRATION MODE</button>
+    <button id="btn-nav-ctrl" onclick="showPage('controller')">MISSION CONTROL</button>
+</nav>
+
+<div id="calibration" class="page active">
+    <h2>SERVO NEUTRAL TUNING</h2>
+    <div class="grid-calibration" id="servo-sliders">
+        </div>
+</div>
+
+<div id="controller" class="page">
+    <h2>ROBOT MOVEMENT</h2>
+    <div class="controller-layout">
         <div class="arrow-grid">
             <div></div><div id="key-Up" class="key">▲</div><div></div>
             <div id="key-Left" class="key">◀</div><div id="key-Down" class="key">▼</div><div id="key-Right" class="key">▶</div>
         </div>
-
-        <div id="calibration">
-            <div class="slider-card">
-                <label>Servo 1 Neutral Point: <span id="val1">90</span></label>
-                <input type="range" min="70" max="110" value="90" id="s1">
+        
+        <div class="claw-controls">
+            <button id="key-q" class="btn-claw">OPEN CLAW (Q)</button>
+            <button id="key-e" class="btn-claw">CLOSE CLAW (E)</button>
+            <div style="display:flex; gap:10px;">
+                <button id="key-a" class="btn-claw" style="width:60px;">↺ (A)</button>
+                <button id="key-d" class="btn-claw" style="width:60px;">↻ (D)</button>
             </div>
-            <p><small>*Cari angka sampe kaki diem (titik mati)</small></p>
         </div>
     </div>
+    <p style="margin-top: 40px; color: #888;">Use Arrow Keys for Move | Q/E for Claw | A/D for Rotate</p>
+</div>
 
-    <script>
-        let port;
-        let writer;
+<button id="connect-btn">🔌 CONNECT ESP32</button>
 
-        // Fungsi koneksi Serial
-        document.getElementById('connect').addEventListener('click', async () => {
-            try {
-                port = await navigator.serial.requestPort();
-                await port.open({ baudRate: 115200 });
-                writer = port.writable.getWriter();
-                document.getElementById('status').innerText = "Status: Connected!";
-            } catch (e) {
-                console.error(e);
-            }
-        });
+<script>
+    let port, writer;
 
-        // Deteksi Keyboard
-        window.addEventListener('keydown', (e) => {
-            let keyEl = document.getElementById(`key-${e.key.replace('Arrow','')}`);
-            if(keyEl) {
-                keyEl.classList.add('active');
-                sendData(e.key.toUpperCase());
-            }
-        });
+    // Generate 8 Servo Sliders + 2 Claw Sliders
+    const sliderContainer = document.getElementById('servo-sliders');
+    for(let i=1; i<=10; i++) {
+        const label = i <= 8 ? `Leg Servo ${i}` : `Claw Servo ${i-8}`;
+        sliderContainer.innerHTML += `
+            <div class="servo-card">
+                <label>${label}</label><br>
+                <strong id="v${i}">90</strong><br>
+                <input type="range" min="70" max="110" value="90" oninput="updateServo(${i}, this.value)">
+            </div>
+        `;
+    }
 
-        window.addEventListener('keyup', (e) => {
-            let keyEl = document.getElementById(`key-${e.key.replace('Arrow','')}`);
-            if(keyEl) {
-                keyEl.classList.remove('active');
-                sendData("STOP");
-            }
-        });
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.getElementById('btn-nav-cal').classList.toggle('active', id === 'calibration');
+        document.getElementById('btn-nav-ctrl').classList.toggle('active', id === 'controller');
+    }
 
-        async function sendData(msg) {
-            if (writer) {
-                const encoder = new TextEncoder();
-                await writer.write(encoder.encode(msg + "\n"));
-            }
+    async function updateServo(id, val) {
+        document.getElementById(`v${id}`).innerText = val;
+        sendData(`S${id}:${val}`);
+    }
+
+    // Serial Logic
+    document.getElementById('connect-btn').addEventListener('click', async () => {
+        try {
+            port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
+            writer = port.writable.getWriter();
+            document.getElementById('connect-btn').innerText = "✅ CONNECTED";
+            document.getElementById('connect-btn').style.background = "#555";
+        } catch (e) { alert("Serial Error: " + e); }
+    });
+
+    async function sendData(msg) {
+        if (writer) {
+            const encoder = new TextEncoder();
+            await writer.write(encoder.encode(msg + "\n"));
         }
+    }
 
-        // Slider listener untuk kalibrasi
-        document.getElementById('s1').addEventListener('input', (e) => {
-            document.getElementById('val1').innerText = e.target.value;
-            sendData("S1:" + e.target.value);
-        });
-    </script>
+    // Keyboard Event Listener
+    const keyMap = {
+        'ArrowUp': 'MOVE_F', 'ArrowDown': 'MOVE_B', 'ArrowLeft': 'MOVE_L', 'ArrowRight': 'MOVE_R',
+        'q': 'CLAW_OPEN', 'e': 'CLAW_CLOSE', 'a': 'ROT_L', 'd': 'ROT_R'
+    };
+
+    window.addEventListener('keydown', (e) => {
+        const cmd = keyMap[e.key];
+        if(cmd) {
+            const el = document.getElementById(`key-${e.key.replace('Arrow','')}`);
+            if(el) el.classList.add('active');
+            sendData(cmd);
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        const cmd = keyMap[e.key];
+        if(cmd) {
+            const el = document.getElementById(`key-${e.key.replace('Arrow','')}`);
+            if(el) el.classList.remove('active');
+            sendData("STOP");
+        }
+    });
+</script>
 </body>
 </html>
