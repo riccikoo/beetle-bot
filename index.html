@@ -50,6 +50,15 @@
 
 <div id="controller" class="page">
     <h2>Manual Operation</h2>
+    
+    <div style="margin-bottom: 50px;">
+        <div style="font-size: 10px; color: #777; letter-spacing: 2px;">PROXIMITY SENSOR</div>
+        <div id="ultra-val" style="font-size: 48px; font-weight: 200;">00<span style="font-size: 18px;"> cm</span></div>
+        <div style="width: 300px; height: 2px; background: #222; margin: 10px auto; position: relative;">
+            <div id="ultra-bar" style="width: 0%; height: 100%; background: white; transition: 0.3s;"></div>
+        </div>
+    </div>
+
     <div class="ctrl-wrapper">
         <div class="arrow-grid">
             <div></div><div id="key-Up" class="key">↑</div><div></div>
@@ -133,6 +142,53 @@
             document.getElementById(id)?.classList.remove('active');
             sendData("STOP");
         }
+    });
+
+    async function readData() {
+        while (port && port.readable) {
+            const reader = port.readable.getReader();
+            try {
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    const decoded = new TextDecoder().decode(value);
+                    // Asumsi ESP32 ngirim data format "U:jarak" (contoh: "U:25")
+                    if (decoded.startsWith("U:")) {
+                        const dist = decoded.split(":")[1];
+                        updateUltrasonicUI(parseInt(dist));
+                    }
+                }
+            } catch (error) { console.error(error); } 
+            finally { reader.releaseLock(); }
+        }
+    }
+
+    function updateUltrasonicUI(cm) {
+        // Update angka
+        document.getElementById('ultra-val').innerHTML = `${cm}<span style="font-size: 18px;"> cm</span>`;
+        
+        // Update bar (maksimal 100cm untuk visualisasi)
+        let percent = Math.min(cm, 100);
+        document.getElementById('ultra-bar').style.width = percent + "%";
+        
+        // Efek visual kalau terlalu dekat (< 10cm)
+        if(cm < 10) {
+            document.getElementById('ultra-val').style.color = "#ff4444"; // Sedikit aksen error/warning
+        } else {
+            document.getElementById('ultra-val').style.color = "white";
+        }
+    }
+
+    // Panggil readData() setelah sukses Connect
+    document.getElementById('connect-btn').addEventListener('click', async () => {
+        try {
+            port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
+            writer = port.writable.getWriter();
+            document.getElementById('connect-btn').innerText = "SYSTEM ONLINE";
+            readData(); // MULAI MEMBACA DATA DARI ESP32
+        } catch (e) { console.log(e); }
     });
 </script>
 </body>
