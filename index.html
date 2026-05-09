@@ -1,169 +1,331 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Laba-laba Sunda-bot</title>
     <style>
-        :root { --bg: #ffffff; --text: #000000; --gray: #333333; --light-gray: #777777; }
-        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; }
-        
-        /* Navigation Minimalist */
-        nav { border-bottom: 1px solid var(--light-gray); display: flex; justify-content: center; }
-        nav button { background: none; border: none; color: var(--gray); padding: 20px 40px; cursor: pointer; font-size: 12px; letter-spacing: 2px; transition: 0.3s; }
-        nav button.active { color: var(--text); border-bottom: 2px solid var(--text); }
+      :root {
+        --bg: #ffffff;
+        --text: #000000;
+        --gray: #333333;
+        --light-gray: #777777;
+      }
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        margin: 0;
+      }
 
-        .page { display: none; padding: 40px; text-align: center; }
-        .page.active { display: block; }
+      /* Navigation Minimalist */
+      nav {
+        border-bottom: 1px solid var(--light-gray);
+        display: flex;
+        justify-content: center;
+      }
+      nav button {
+        background: none;
+        border: none;
+        color: var(--gray);
+        padding: 20px 40px;
+        cursor: pointer;
+        font-size: 12px;
+        letter-spacing: 2px;
+        transition: 0.3s;
+      }
+      nav button.active {
+        color: var(--text);
+        border-bottom: 2px solid var(--text);
+      }
 
-        /* Calibration Grid */
-        .grid-cal { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 1200px; margin: auto; }
-        .servo-card { border: 1px solid var(--gray); padding: 20px; border-radius: 4px; font-variant-numeric: tabular-nums;}
-        input[type=range] { width: 100%; accent-color: rgb(0, 0, 0); margin-top: 15px; cursor: pointer; }
-        
-        /* Controller - Clean Look */
-        .ctrl-wrapper { display: flex; justify-content: center; align-items: center; gap: 100px; margin-top: 50px; }
-        .arrow-grid { display: grid; grid-template-columns: repeat(3, 70px); gap: 15px; }
-        .key { width: 70px; height: 70px; border: 1px solid var(--gray); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: 0.1s; color: var(--light-gray); }
-        .key.active { background: rgb(0, 0, 0); color: rgb(255, 255, 255); border-color: rgb(0, 0, 0); transform: translateY(-2px); }
-        
-        .action-keys { display: flex; flex-direction: column; gap: 15px; }
-        .btn-action { width: 150px; padding: 15px; border: 1px solid var(--gray); background: none; color: rgb(0, 0, 0); border-radius: 4px; cursor: pointer; font-size: 11px; letter-spacing: 1px; }
-        .btn-action.active { background: rgb(0, 0, 0); color: rgb(255, 255, 255); }
+      .page {
+        display: none;
+        padding: 40px;
+        text-align: center;
+      }
+      .page.active {
+        display: block;
+      }
 
-        #connect-btn { position: fixed; bottom: 30px; left: 30px; background: rgb(255, 255, 255); color: black; border: none; padding: 12px 24px; border-radius: 2px; font-weight: bold; cursor: pointer; font-size: 11px; letter-spacing: 1px; }
-        #connect-btn:hover { background: #585858; }
+      /* Calibration Grid */
+      .grid-cal {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        max-width: 1200px;
+        margin: auto;
+      }
+      .servo-card {
+        border: 1px solid var(--gray);
+        padding: 20px;
+        border-radius: 4px;
+        font-variant-numeric: tabular-nums;
+      }
+      input[type="range"] {
+        width: 100%;
+        accent-color: rgb(0, 0, 0);
+        margin-top: 15px;
+        cursor: pointer;
+      }
 
-        h2 { font-weight: 300; letter-spacing: 5px; margin-bottom: 40px; font-size: 18px; text-transform: uppercase; }
+      /* Controller - Clean Look */
+      .ctrl-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 100px;
+        margin-top: 50px;
+      }
+      .arrow-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 70px);
+        gap: 15px;
+      }
+      .key {
+        width: 70px;
+        height: 70px;
+        border: 1px solid var(--gray);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        transition: 0.1s;
+        color: var(--light-gray);
+      }
+      .key.active {
+        background: rgb(0, 0, 0);
+        color: rgb(255, 255, 255);
+        border-color: rgb(0, 0, 0);
+        transform: translateY(-2px);
+      }
+
+      .action-keys {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .btn-action {
+        width: 150px;
+        padding: 15px;
+        border: 1px solid var(--gray);
+        background: none;
+        color: rgb(0, 0, 0);
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+        letter-spacing: 1px;
+      }
+      .btn-action.active {
+        background: rgb(0, 0, 0);
+        color: rgb(255, 255, 255);
+      }
+
+      #connect-btn {
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        background: rgb(255, 255, 255);
+        color: black;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 2px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 11px;
+        letter-spacing: 1px;
+      }
+      #connect-btn:hover {
+        background: #585858;
+      }
+
+      h2 {
+        font-weight: 300;
+        letter-spacing: 5px;
+        margin-bottom: 40px;
+        font-size: 18px;
+        text-transform: uppercase;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <nav>
+      <button id="btn-nav-cal" class="active" onclick="showPage('calibration')">
+        01. CALIBRATION
+      </button>
+      <button id="btn-nav-ctrl" onclick="showPage('controller')">
+        02. CONTROL
+      </button>
+    </nav>
 
-<nav>
-    <button id="btn-nav-cal" class="active" onclick="showPage('calibration')">01. CALIBRATION</button>
-    <button id="btn-nav-ctrl" onclick="showPage('controller')">02. CONTROL</button>
-</nav>
-
-<div id="calibration" class="page active">
-    <h2>Neutral Tuning</h2>
-    <div class="grid-cal" id="servo-sliders"></div>
-</div>
-
-<div id="controller" class="page">
-    <h2>Manual Operation</h2>
-    
-    <div style="margin-bottom: 50px;">
-        <div style="font-size: 10px; color: #777; letter-spacing: 2px;">PROXIMITY SENSOR</div>
-        <div id="ultra-val" style="font-size: 48px; font-weight: 200;">00<span style="font-size: 18px;"> cm</span></div>
-        <div style="width: 300px; height: 2px; background: #222; margin: 10px auto; position: relative;">
-            <div id="ultra-bar" style="width: 0%; height: 100%; background: white; transition: 0.3s;"></div>
-        </div>
+    <div id="calibration" class="page active">
+      <h2>Neutral Tuning</h2>
+      <div class="grid-cal" id="servo-sliders"></div>
     </div>
 
-    <div class="ctrl-wrapper">
+    <div id="controller" class="page">
+      <h2>Manual Operation</h2>
+
+      <div style="margin-bottom: 50px">
+        <div style="font-size: 10px; color: #777; letter-spacing: 2px">
+          PROXIMITY SENSOR
+        </div>
+        <div id="ultra-val" style="font-size: 48px; font-weight: 200">
+          00<span style="font-size: 18px"> cm</span>
+        </div>
+        <div
+          style="
+            width: 300px;
+            height: 2px;
+            background: #222;
+            margin: 10px auto;
+            position: relative;
+          "
+        >
+          <div
+            id="ultra-bar"
+            style="width: 0%; height: 100%; background: white; transition: 0.3s"
+          ></div>
+        </div>
+      </div>
+
+      <div class="ctrl-wrapper">
         <div class="arrow-grid">
-            <div></div><div id="key-Up" class="key">↑</div><div></div>
-            <div id="key-Left" class="key">←</div><div id="key-Down" class="key">↓</div><div id="key-Right" class="key">→</div>
+          <div></div>
+          <div id="key-Up" class="key">↑</div>
+          <div></div>
+          <div id="key-Left" class="key">←</div>
+          <div id="key-Down" class="key">↓</div>
+          <div id="key-Right" class="key">→</div>
         </div>
-        
+
         <div class="action-keys">
-            <button id="key-q" class="btn-action">OPEN CLAW [Q]</button>
-            <button id="key-e" class="btn-action">CLOSE CLAW [E]</button>
-            <div style="display:flex; gap:10px;">
-                <button id="key-a" class="btn-action" style="width:70px;">ROT L [A]</button>
-                <button id="key-d" class="btn-action" style="width:70px;">ROT R [D]</button>
-            </div>
+          <button id="key-q" class="btn-action">OPEN CLAW [Q]</button>
+          <button id="key-e" class="btn-action">CLOSE CLAW [E]</button>
+          <div style="display: flex; gap: 10px">
+            <button id="key-a" class="btn-action" style="width: 70px">
+              ROT L [A]
+            </button>
+            <button id="key-d" class="btn-action" style="width: 70px">
+              ROT R [D]
+            </button>
+          </div>
         </div>
+      </div>
     </div>
-</div>
 
-<button id="connect-btn">INITIALIZE SERIAL</button>
+    <button id="connect-btn">INITIALIZE SERIAL</button>
 
-<script>
-    let socket;
-    const gateway = `ws://192.168.4.1/ws`; 
+    <script>
+      let socket;
+      const gateway = `ws://192.168.4.1/ws`;
 
-    // Generate 10 Sliders
-    const container = document.getElementById('servo-sliders');
-    for(let i=1; i<=10; i++) {
-        const name = i <= 8 ? `LEG_${i}` : `CLAW_${i-8}`;
+      // Generate 10 Sliders
+      const container = document.getElementById("servo-sliders");
+      for (let i = 1; i <= 10; i++) {
+        const name = i <= 8 ? `LEG_${i}` : `CLAW_${i - 8}`;
         container.innerHTML += `
             <div class="servo-card">
                 <div style="font-size: 10px; color: #777; margin-bottom: 10px;">${name}</div>
                 <div id="v${i}" style="font-size: 20px;">90</div>
                 <input type="range" min="70" max="110" value="90" oninput="updateServo(${i}, this.value)">
             </div>`;
-    }
+      }
 
-    function showPage(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      function showPage(id) {
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => p.classList.remove("active"));
+        document.getElementById(id).classList.add("active");
+        document
+          .querySelectorAll("nav button")
+          .forEach((b) => b.classList.remove("active"));
         // Perbaikan: gunakan event target atau id untuk aktivasi tombol
-        if(id === 'calibration') document.getElementById('btn-nav-cal').classList.add('active');
-        else document.getElementById('btn-nav-ctrl').classList.add('active');
-    }
+        if (id === "calibration")
+          document.getElementById("btn-nav-cal").classList.add("active");
+        else document.getElementById("btn-nav-ctrl").classList.add("active");
+      }
 
-    function initWebSocket() {
+      function initWebSocket() {
         socket = new WebSocket(gateway);
         socket.onopen = () => {
-            document.getElementById('connect-btn').innerText = "SYSTEM ONLINE (WiFi)";
-            document.getElementById('connect-btn').style.background = "#000000";
-            document.getElementById('connect-btn').style.color = "#ffffff";
+          document.getElementById("connect-btn").innerText =
+            "SYSTEM ONLINE (WiFi)";
+          document.getElementById("connect-btn").style.background = "#000000";
+          document.getElementById("connect-btn").style.color = "#ffffff";
         };
         socket.onmessage = (event) => {
-            if (event.data.startsWith("U:")) {
-                updateUltrasonicUI(parseInt(event.data.split(":")[1]));
-            }
+          if (event.data.startsWith("U:")) {
+            updateUltrasonicUI(parseInt(event.data.split(":")[1]));
+          }
         };
         socket.onclose = () => {
-            document.getElementById('connect-btn').innerText = "OFFLINE - RECONNECT?";
-            setTimeout(initWebSocket, 2000); // Auto reconnect
+          document.getElementById("connect-btn").innerText =
+            "OFFLINE - RECONNECT?";
+          setTimeout(initWebSocket, 2000); // Auto reconnect
         };
-    }
+      }
 
-    async function sendData(msg) {
+      async function sendData(msg) {
         if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(msg);
+          socket.send(msg);
         }
-    }
+      }
 
-    async function updateServo(id, val) {
+      async function updateServo(id, val) {
         document.getElementById(`v${id}`).innerText = val;
         sendData(`S${id}:${val}`);
-    }
+      }
 
-    function updateUltrasonicUI(cm) {
-        document.getElementById('ultra-val').innerHTML = `${cm}<span style="font-size: 18px;"> cm</span>`;
+      function updateUltrasonicUI(cm) {
+        document.getElementById("ultra-val").innerHTML =
+          `${cm}<span style="font-size: 18px;"> cm</span>`;
         let percent = Math.min(cm, 100);
-        document.getElementById('ultra-bar').style.width = percent + "%";
-        document.getElementById('ultra-val').style.color = (cm < 10) ? "#ff4444" : "black";
-    }
+        document.getElementById("ultra-bar").style.width = percent + "%";
+        document.getElementById("ultra-val").style.color =
+          cm < 10 ? "#ff4444" : "black";
+      }
 
-    // Keyboard Logic
-    const keyMap = {
-        'ArrowUp': 'MOVE_F', 'ArrowDown': 'MOVE_B', 'ArrowLeft': 'MOVE_L', 'ArrowRight': 'MOVE_R',
-        'q': 'CLAW_OPEN', 'e': 'CLAW_CLOSE', 'a': 'ROT_L', 'd': 'ROT_R'
-    };
+      // Keyboard Logic
+      const keyMap = {
+        ArrowUp: "MOVE_F",
+        ArrowDown: "MOVE_B",
+        ArrowLeft: "MOVE_L",
+        ArrowRight: "MOVE_R",
+        q: "CLAW_OPEN",
+        e: "CLAW_CLOSE",
+        a: "ROT_L",
+        d: "ROT_R",
+      };
 
-    window.addEventListener('keydown', (e) => {
+      window.addEventListener("keydown", (e) => {
         const cmd = keyMap[e.key] || keyMap[e.key.toLowerCase()];
-        if(cmd && !e.repeat) {
-            const id = e.key.startsWith('Arrow') ? `key-${e.key.replace('Arrow','')}` : `key-${e.key.toLowerCase()}`;
-            document.getElementById(id)?.classList.add('active');
-            sendData(cmd);
+        if (cmd && !e.repeat) {
+          const id = e.key.startsWith("Arrow")
+            ? `key-${e.key.replace("Arrow", "")}`
+            : `key-${e.key.toLowerCase()}`;
+          document.getElementById(id)?.classList.add("active");
+          sendData(cmd);
         }
-    });
+      });
 
-    window.addEventListener('keyup', (e) => {
+      window.addEventListener("keyup", (e) => {
         const cmd = keyMap[e.key] || keyMap[e.key.toLowerCase()];
-        if(cmd) {
-            const id = e.key.startsWith('Arrow') ? `key-${e.key.replace('Arrow','')}` : `key-${e.key.toLowerCase()}`;
-            document.getElementById(id)?.classList.remove('active');
-            sendData("STOP");
+        if (cmd) {
+          const id = e.key.startsWith("Arrow")
+            ? `key-${e.key.replace("Arrow", "")}`
+            : `key-${e.key.toLowerCase()}`;
+          document.getElementById(id)?.classList.remove("active");
+          sendData("STOP");
         }
-    });
+      });
 
-    document.getElementById('connect-btn').addEventListener('click', initWebSocket);
-</script>
-</body>
+      document
+        .getElementById("connect-btn")
+        .addEventListener("click", initWebSocket);
+    </script>
+  </body>
 </html>
