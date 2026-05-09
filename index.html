@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quadruped Commander</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; }
+        .container { display: flex; gap: 40px; padding: 20px; }
+        .arrow-grid { display: grid; grid-template-columns: repeat(3, 80px); gap: 10px; }
+        .key { width: 80px; height: 80px; background: #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: 0.1s; border: 2px solid #555; }
+        .active { background: #00ffcc; color: black; box-shadow: 0 0 20px #00ffcc; transform: scale(1.1); }
+        .slider-card { background: #2a2a2a; padding: 15px; border-radius: 10px; margin-bottom: 10px; width: 300px; }
+        input[type=range] { width: 100%; }
+        button { padding: 10px 20px; cursor: pointer; background: #00ffcc; border: none; border-radius: 5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🕷️ QUADRUPED COMMANDER</h1>
+    <button id="connect">CONNECT TO ESP32</button>
+    <p id="status">Status: Disconnected</p>
+
+    <div class="container">
+        <div class="arrow-grid">
+            <div></div><div id="key-Up" class="key">▲</div><div></div>
+            <div id="key-Left" class="key">◀</div><div id="key-Down" class="key">▼</div><div id="key-Right" class="key">▶</div>
+        </div>
+
+        <div id="calibration">
+            <div class="slider-card">
+                <label>Servo 1 Neutral Point: <span id="val1">90</span></label>
+                <input type="range" min="70" max="110" value="90" id="s1">
+            </div>
+            <p><small>*Cari angka sampe kaki diem (titik mati)</small></p>
+        </div>
+    </div>
+
+    <script>
+        let port;
+        let writer;
+
+        // Fungsi koneksi Serial
+        document.getElementById('connect').addEventListener('click', async () => {
+            try {
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+                writer = port.writable.getWriter();
+                document.getElementById('status').innerText = "Status: Connected!";
+            } catch (e) {
+                console.error(e);
+            }
+        });
+
+        // Deteksi Keyboard
+        window.addEventListener('keydown', (e) => {
+            let keyEl = document.getElementById(`key-${e.key.replace('Arrow','')}`);
+            if(keyEl) {
+                keyEl.classList.add('active');
+                sendData(e.key.toUpperCase());
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            let keyEl = document.getElementById(`key-${e.key.replace('Arrow','')}`);
+            if(keyEl) {
+                keyEl.classList.remove('active');
+                sendData("STOP");
+            }
+        });
+
+        async function sendData(msg) {
+            if (writer) {
+                const encoder = new TextEncoder();
+                await writer.write(encoder.encode(msg + "\n"));
+            }
+        }
+
+        // Slider listener untuk kalibrasi
+        document.getElementById('s1').addEventListener('input', (e) => {
+            document.getElementById('val1').innerText = e.target.value;
+            sendData("S1:" + e.target.value);
+        });
+    </script>
+</body>
+</html>
