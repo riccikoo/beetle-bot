@@ -2,92 +2,93 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Quadruped Spider Command</title>
+    <title>Monochrome Robot Command</title>
     <style>
-        :root { --neon: #00ffcc; --bg: #121212; --card: #1e1e1e; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; overflow: hidden; }
+        :root { --bg: #ffffff; --text: #000000; --gray: #333333; --light-gray: #777777; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; }
         
-        /* Navigation */
-        nav { background: #000; padding: 15px; display: flex; justify-content: center; gap: 20px; border-bottom: 2px solid var(--neon); }
-        nav button { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 8px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        nav button.active { background: var(--neon); color: black; }
+        /* Navigation Minimalist */
+        nav { border-bottom: 1px solid var(--light-gray); display: flex; justify-content: center; }
+        nav button { background: none; border: none; color: var(--gray); padding: 20px 40px; cursor: pointer; font-size: 12px; letter-spacing: 2px; transition: 0.3s; }
+        nav button.active { color: var(--text); border-bottom: 2px solid var(--text); }
 
-        .page { display: none; padding: 20px; height: 90vh; box-sizing: border-box; }
-        .page.active { display: flex; flex-direction: column; align-items: center; }
+        .page { display: none; padding: 40px; text-align: center; }
+        .page.active { display: block; }
 
         /* Calibration Grid */
-        .grid-calibration { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; max-width: 1000px; }
-        .servo-card { background: var(--card); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #333; }
+        .grid-cal { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 1200px; margin: auto; }
+        .servo-card { border: 1px solid var(--gray); padding: 20px; border-radius: 4px; }
+        input[type=range] { width: 100%; accent-color: rgb(0, 0, 0); margin-top: 15px; cursor: pointer; }
         
-        /* Controller Layout */
-        .controller-layout { display: flex; gap: 50px; align-items: center; margin-top: 30px; }
-        .arrow-grid { display: grid; grid-template-columns: repeat(3, 80px); gap: 10px; }
-        .key { width: 80px; height: 80px; background: #333; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 24px; border: 2px solid #444; transition: 0.1s; }
-        .key.active { background: var(--neon); color: black; box-shadow: 0 0 20px var(--neon); transform: scale(1.1); }
+        /* Controller - Clean Look */
+        .ctrl-wrapper { display: flex; justify-content: center; align-items: center; gap: 100px; margin-top: 50px; }
+        .arrow-grid { display: grid; grid-template-columns: repeat(3, 70px); gap: 15px; }
+        .key { width: 70px; height: 70px; border: 1px solid var(--gray); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: 0.1s; color: var(--light-gray); }
+        .key.active { background: rgb(0, 0, 0); color: rgb(255, 255, 255); border-color: rgb(0, 0, 0); transform: translateY(-2px); }
         
-        .claw-controls { display: flex; flex-direction: column; gap: 20px; }
-        .btn-claw { width: 120px; height: 60px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; background: #444; color: white; }
-        .btn-claw.active { background: #ff4444; box-shadow: 0 0 15px #ff4444; }
+        .action-keys { display: flex; flex-direction: column; gap: 15px; }
+        .btn-action { width: 150px; padding: 15px; border: 1px solid var(--gray); background: none; color: rgb(0, 0, 0); border-radius: 4px; cursor: pointer; font-size: 11px; letter-spacing: 1px; }
+        .btn-action.active { background: rgb(0, 0, 0); color: rgb(255, 255, 255); }
 
-        #connect-btn { position: fixed; bottom: 20px; right: 20px; padding: 15px 25px; border-radius: 50px; background: var(--neon); border: none; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,255,204,0.3); }
+        #connect-btn { position: fixed; bottom: 30px; left: 30px; background: rgb(255, 255, 255); color: black; border: none; padding: 12px 24px; border-radius: 2px; font-weight: bold; cursor: pointer; font-size: 11px; letter-spacing: 1px; }
+        #connect-btn:hover { background: #585858; }
+
+        h2 { font-weight: 300; letter-spacing: 5px; margin-bottom: 40px; font-size: 18px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <nav>
-    <button id="btn-nav-cal" class="active" onclick="showPage('calibration')">CALIBRATION MODE</button>
-    <button id="btn-nav-ctrl" onclick="showPage('controller')">MISSION CONTROL</button>
+    <button id="btn-nav-cal" class="active" onclick="showPage('calibration')">01. CALIBRATION</button>
+    <button id="btn-nav-ctrl" onclick="showPage('controller')">02. CONTROL</button>
 </nav>
 
 <div id="calibration" class="page active">
-    <h2>SERVO NEUTRAL TUNING</h2>
-    <div class="grid-calibration" id="servo-sliders">
-        </div>
+    <h2>Neutral Tuning</h2>
+    <div class="grid-cal" id="servo-sliders"></div>
 </div>
 
 <div id="controller" class="page">
-    <h2>ROBOT MOVEMENT</h2>
-    <div class="controller-layout">
+    <h2>Manual Operation</h2>
+    <div class="ctrl-wrapper">
         <div class="arrow-grid">
-            <div></div><div id="key-Up" class="key">▲</div><div></div>
-            <div id="key-Left" class="key">◀</div><div id="key-Down" class="key">▼</div><div id="key-Right" class="key">▶</div>
+            <div></div><div id="key-Up" class="key">↑</div><div></div>
+            <div id="key-Left" class="key">←</div><div id="key-Down" class="key">↓</div><div id="key-Right" class="key">→</div>
         </div>
         
-        <div class="claw-controls">
-            <button id="key-q" class="btn-claw">OPEN CLAW (Q)</button>
-            <button id="key-e" class="btn-claw">CLOSE CLAW (E)</button>
+        <div class="action-keys">
+            <button id="key-q" class="btn-action">OPEN CLAW [Q]</button>
+            <button id="key-e" class="btn-action">CLOSE CLAW [E]</button>
             <div style="display:flex; gap:10px;">
-                <button id="key-a" class="btn-claw" style="width:60px;">↺ (A)</button>
-                <button id="key-d" class="btn-claw" style="width:60px;">↻ (D)</button>
+                <button id="key-a" class="btn-action" style="width:70px;">ROT L [A]</button>
+                <button id="key-d" class="btn-action" style="width:70px;">ROT R [D]</button>
             </div>
         </div>
     </div>
-    <p style="margin-top: 40px; color: #888;">Use Arrow Keys for Move | Q/E for Claw | A/D for Rotate</p>
 </div>
 
-<button id="connect-btn">🔌 CONNECT ESP32</button>
+<button id="connect-btn">INITIALIZE SERIAL</button>
 
 <script>
     let port, writer;
 
-    // Generate 8 Servo Sliders + 2 Claw Sliders
-    const sliderContainer = document.getElementById('servo-sliders');
+    // Generate 10 Sliders (8 Legs + 2 Claws)
+    const container = document.getElementById('servo-sliders');
     for(let i=1; i<=10; i++) {
-        const label = i <= 8 ? `Leg Servo ${i}` : `Claw Servo ${i-8}`;
-        sliderContainer.innerHTML += `
+        const name = i <= 8 ? `LEG_${i}` : `CLAW_${i-8}`;
+        container.innerHTML += `
             <div class="servo-card">
-                <label>${label}</label><br>
-                <strong id="v${i}">90</strong><br>
+                <div style="font-size: 10px; color: #777; margin-bottom: 10px;">${name}</div>
+                <div id="v${i}" style="font-size: 20px;">90</div>
                 <input type="range" min="70" max="110" value="90" oninput="updateServo(${i}, this.value)">
-            </div>
-        `;
+            </div>`;
     }
 
     function showPage(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        document.getElementById('btn-nav-cal').classList.toggle('active', id === 'calibration');
-        document.getElementById('btn-nav-ctrl').classList.toggle('active', id === 'controller');
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
     }
 
     async function updateServo(id, val) {
@@ -95,15 +96,13 @@
         sendData(`S${id}:${val}`);
     }
 
-    // Serial Logic
     document.getElementById('connect-btn').addEventListener('click', async () => {
         try {
             port = await navigator.serial.requestPort();
             await port.open({ baudRate: 115200 });
             writer = port.writable.getWriter();
-            document.getElementById('connect-btn').innerText = "✅ CONNECTED";
-            document.getElementById('connect-btn').style.background = "#555";
-        } catch (e) { alert("Serial Error: " + e); }
+            document.getElementById('connect-btn').innerText = "SYSTEM ONLINE";
+        } catch (e) { console.log(e); }
     });
 
     async function sendData(msg) {
@@ -113,7 +112,6 @@
         }
     }
 
-    // Keyboard Event Listener
     const keyMap = {
         'ArrowUp': 'MOVE_F', 'ArrowDown': 'MOVE_B', 'ArrowLeft': 'MOVE_L', 'ArrowRight': 'MOVE_R',
         'q': 'CLAW_OPEN', 'e': 'CLAW_CLOSE', 'a': 'ROT_L', 'd': 'ROT_R'
@@ -121,9 +119,9 @@
 
     window.addEventListener('keydown', (e) => {
         const cmd = keyMap[e.key];
-        if(cmd) {
-            const el = document.getElementById(`key-${e.key.replace('Arrow','')}`);
-            if(el) el.classList.add('active');
+        if(cmd && !e.repeat) {
+            const id = e.key.startsWith('Arrow') ? `key-${e.key.replace('Arrow','')}` : `key-${e.key.toLowerCase()}`;
+            document.getElementById(id)?.classList.add('active');
             sendData(cmd);
         }
     });
@@ -131,8 +129,8 @@
     window.addEventListener('keyup', (e) => {
         const cmd = keyMap[e.key];
         if(cmd) {
-            const el = document.getElementById(`key-${e.key.replace('Arrow','')}`);
-            if(el) el.classList.remove('active');
+            const id = e.key.startsWith('Arrow') ? `key-${e.key.replace('Arrow','')}` : `key-${e.key.toLowerCase()}`;
+            document.getElementById(id)?.classList.remove('active');
             sendData("STOP");
         }
     });
