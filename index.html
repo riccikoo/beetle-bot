@@ -11,10 +11,7 @@
         --light-gray: #777777;
       }
       body {
-        font-family:
-          "Inter",
-          -apple-system,
-          sans-serif;
+        font-family: "Inter", -apple-system, sans-serif;
         background: var(--bg);
         color: var(--text);
         margin: 0;
@@ -50,25 +47,19 @@
         display: block;
       }
 
-      /* Calibration Grid */
-      .grid-cal {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        max-width: 1200px;
-        margin: auto;
+      /* Dashboard Grid Sensor */
+      .sensor-container {
+        display: flex;
+        justify-content: center;
+        gap: 50px;
+        margin-bottom: 40px;
+        flex-wrap: wrap;
       }
-      .servo-card {
+      .sensor-box {
         border: 1px solid var(--gray);
         padding: 20px;
         border-radius: 4px;
-        font-variant-numeric: tabular-nums;
-      }
-      input[type="range"] {
-        width: 100%;
-        accent-color: rgb(0, 0, 0);
-        margin-top: 15px;
-        cursor: pointer;
+        min-width: 200px;
       }
 
       /* Controller - Clean Look */
@@ -77,7 +68,7 @@
         justify-content: center;
         align-items: center;
         gap: 100px;
-        margin-top: 50px;
+        margin-top: 30px;
       }
       .arrow-grid {
         display: grid;
@@ -95,6 +86,8 @@
         font-size: 20px;
         transition: 0.1s;
         color: var(--light-gray);
+        cursor: pointer;
+        user-select: none;
       }
       .key.active {
         background: rgb(0, 0, 0);
@@ -103,43 +96,29 @@
         transform: translateY(-2px);
       }
 
-      .action-keys {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-      }
-      .btn-action {
-        width: 150px;
-        padding: 15px;
-        border: 1px solid var(--gray);
-        background: none;
-        color: rgb(0, 0, 0);
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 11px;
-        letter-spacing: 1px;
-      }
-      .btn-action.active {
-        background: rgb(0, 0, 0);
-        color: rgb(255, 255, 255);
+      /* Color Display box */
+      #color-preview {
+        width: 50px;
+        height: 25px;
+        margin: 10px auto;
+        border: 1px solid #333;
+        background-color: #777;
+        border-radius: 3px;
+        transition: 0.3s;
       }
 
       #connect-btn {
         position: fixed;
         bottom: 30px;
         left: 30px;
-        background: rgb(255, 255, 255);
-        color: black;
+        background: #000;
+        color: white;
         border: none;
         padding: 12px 24px;
         border-radius: 2px;
         font-weight: bold;
-        cursor: pointer;
         font-size: 11px;
         letter-spacing: 1px;
-      }
-      #connect-btn:hover {
-        background: #585858;
       }
 
       h2 {
@@ -153,179 +132,123 @@
   </head>
   <body>
     <nav>
-      <button id="btn-nav-cal" class="active" onclick="showPage('calibration')">
-        01. CALIBRATION
-      </button>
-      <button id="btn-nav-ctrl" onclick="showPage('controller')">
-        02. CONTROL
-      </button>
+      <button id="btn-nav-ctrl" class="active">CONTROL panel</button>
     </nav>
 
-    <div id="calibration" class="page active">
-      <h2>Neutral Tuning</h2>
-      <div class="grid-cal" id="servo-sliders"></div>
-    </div>
-
-    <div id="controller" class="page">
+    <div id="controller" class="page active">
       <h2>Manual Operation</h2>
 
-      <div style="margin-bottom: 50px">
-        <div style="font-size: 10px; color: #777; letter-spacing: 2px">
-          PROXIMITY SENSOR
+      <div class="sensor-container">
+        <div class="sensor-box">
+          <div style="font-size: 10px; color: #777; letter-spacing: 2px">PROXIMITY SENSOR</div>
+          <div id="ultra-val" style="font-size: 36px; font-weight: 200; margin: 10px 0;">00<span style="font-size: 18px"> cm</span></div>
+          <div style="width: 100%; height: 3px; background: #222; position: relative;">
+            <div id="ultra-bar" style="width: 0%; height: 100%; background: black; transition: 0.3s"></div>
+          </div>
         </div>
-        <div id="ultra-val" style="font-size: 48px; font-weight: 200">
-          00<span style="font-size: 18px"> cm</span>
-        </div>
-        <div
-          style="
-            width: 300px;
-            height: 2px;
-            background: #222;
-            margin: 10px auto;
-            position: relative;
-          "
-        >
-          <div
-            id="ultra-bar"
-            style="width: 0%; height: 100%; background: white; transition: 0.3s"
-          ></div>
+
+        <div class="sensor-box">
+          <div style="font-size: 10px; color: #777; letter-spacing: 2px">COLOR DETECTOR (TCS3200)</div>
+          <div id="color-text" style="font-size: 20px; font-weight: 400; margin-top: 10px;">SCANNING...</div>
+          <div id="color-preview"></div>
+          <div id="rgb-raw" style="font-size: 11px; color: #777; font-family: monospace;">R:0 | G:0 | B:0</div>
         </div>
       </div>
 
       <div class="ctrl-wrapper">
         <div class="arrow-grid">
           <div></div>
-          <div id="key-Up" class="key">↑</div>
+          <div id="key-Up" class="key" mousedown="sendCmd('maju')">↑</div>
           <div></div>
-          <div id="key-Left" class="key">←</div>
-          <div id="key-Down" class="key">↓</div>
-          <div id="key-Right" class="key">→</div>
-        </div>
-
-        <div class="action-keys">
-          <button id="key-q" class="btn-action">OPEN CLAW [Q]</button>
-          <button id="key-e" class="btn-action">CLOSE CLAW [E]</button>
-          <div style="display: flex; gap: 10px">
-            <button id="key-a" class="btn-action" style="width: 70px">
-              ROT L [A]
-            </button>
-            <button id="key-d" class="btn-action" style="width: 70px">
-              ROT R [D]
-            </button>
-          </div>
+          <div id="key-Left" class="key" mousedown="sendCmd('kiri')">←</div>
+          <div id="key-Stop" class="key" style="color:red;" mousedown="sendCmd('stop')">■</div>
+          <div id="key-Right" class="key" mousedown="sendCmd('kanan')">→</div>
+          <div></div>
+          <div id="key-Down" class="key" mousedown="sendCmd('mundur')">↓</div>
+          <div></div>
         </div>
       </div>
     </div>
 
-    <button id="connect-btn">INITIALIZE SERIAL</button>
+    <button id="connect-btn">ESP32 LINK ACTIVE</button>
 
     <script>
-      let socket;
-      const gateway = `ws://192.168.4.1/ws`;
-
-      // Generate 10 Sliders
-      const container = document.getElementById("servo-sliders");
-      for (let i = 1; i <= 10; i++) {
-        const name = i <= 8 ? `LEG_${i}` : `CLAW_${i - 8}`;
-        container.innerHTML += `
-            <div class="servo-card">
-                <div style="font-size: 10px; color: #777; margin-bottom: 10px;">${name}</div>
-                <div id="v${i}" style="font-size: 20px;">90</div>
-                <input type="range" min="70" max="110" value="90" oninput="updateServo(${i}, this.value)">
-            </div>`;
+      // Mengirimkan command gerakan via HTTP Request Asinkron (Fetch) tanpa Reload Halaman
+      function sendCmd(endpoint) {
+        fetch(`/${endpoint}`)
+          .then(response => console.log(`Cmd: ${endpoint} sukses`))
+          .catch(err => console.error("Koneksi Error:", err));
       }
 
-      function showPage(id) {
-        document
-          .querySelectorAll(".page")
-          .forEach((p) => p.classList.remove("active"));
-        document.getElementById(id).classList.add("active");
-        document
-          .querySelectorAll("nav button")
-          .forEach((b) => b.classList.remove("active"));
-        // Perbaikan: gunakan event target atau id untuk aktivasi tombol
-        if (id === "calibration")
-          document.getElementById("btn-nav-cal").classList.add("active");
-        else document.getElementById("btn-nav-ctrl").classList.add("active");
-      }
-
-      function initWebSocket() {
-        socket = new WebSocket(gateway);
-        socket.onopen = () => {
-          document.getElementById("connect-btn").innerText =
-            "SYSTEM ONLINE (WiFi)";
-          document.getElementById("connect-btn").style.background = "#000000";
-          document.getElementById("connect-btn").style.color = "#ffffff";
-        };
-        socket.onmessage = (event) => {
-          if (event.data.startsWith("U:")) {
-            updateUltrasonicUI(parseInt(event.data.split(":")[1]));
-          }
-        };
-        socket.onclose = () => {
-          document.getElementById("connect-btn").innerText =
-            "OFFLINE - RECONNECT?";
-          setTimeout(initWebSocket, 2000); // Auto reconnect
-        };
-      }
-
-      async function sendData(msg) {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-          socket.send(msg);
-        }
-      }
-
-      async function updateServo(id, val) {
-        document.getElementById(`v${id}`).innerText = val;
-        sendData(`S${id}:${val}`);
-      }
-
-      function updateUltrasonicUI(cm) {
-        document.getElementById("ultra-val").innerHTML =
-          `${cm}<span style="font-size: 18px;"> cm</span>`;
-        let percent = Math.min(cm, 100);
-        document.getElementById("ultra-bar").style.width = percent + "%";
-        document.getElementById("ultra-val").style.color =
-          cm < 10 ? "#ff4444" : "black";
-      }
-
-      // Keyboard Logic
+      // Keyboard Mapping & Event
       const keyMap = {
-        ArrowUp: "MOVE_F",
-        ArrowDown: "MOVE_B",
-        ArrowLeft: "MOVE_L",
-        ArrowRight: "MOVE_R",
-        q: "CLAW_OPEN",
-        e: "CLAW_CLOSE",
-        a: "ROT_L",
-        d: "ROT_R",
+        ArrowUp: { path: "maju", id: "key-Up" },
+        ArrowDown: { path: "mundur", id: "key-Down" },
+        ArrowLeft: { path: "kiri", id: "key-Left" },
+        ArrowRight: { path: "kanan", id: "key-Right" },
+        Escape: { path: "stop", id: "key-Stop" },
+        Space: { path: "stop", id: "key-Stop" }
       };
 
+      let activeKey = null;
+
       window.addEventListener("keydown", (e) => {
-        const cmd = keyMap[e.key] || keyMap[e.key.toLowerCase()];
-        if (cmd && !e.repeat) {
-          const id = e.key.startsWith("Arrow")
-            ? `key-${e.key.replace("Arrow", "")}`
-            : `key-${e.key.toLowerCase()}`;
-          document.getElementById(id)?.classList.add("active");
-          sendData(cmd);
+        const keyData = keyMap[e.key] || (e.code === "Space" ? keyMap["Space"] : null);
+        if (keyData && activeKey !== e.key) {
+          activeKey = e.key;
+          document.getElementById(keyData.id)?.classList.add("active");
+          sendCmd(keyData.path);
         }
       });
 
       window.addEventListener("keyup", (e) => {
-        const cmd = keyMap[e.key] || keyMap[e.key.toLowerCase()];
-        if (cmd) {
-          const id = e.key.startsWith("Arrow")
-            ? `key-${e.key.replace("Arrow", "")}`
-            : `key-${e.key.toLowerCase()}`;
-          document.getElementById(id)?.classList.remove("active");
-          sendData("STOP");
+        const keyData = keyMap[e.key] || (e.code === "Space" ? keyMap["Space"] : null);
+        if (keyData) {
+          activeKey = null;
+          document.getElementById(keyData.id)?.classList.remove("active");
+          sendCmd("stop");
         }
       });
 
-      document
-        .getElementById("connect-btn")
-        .addEventListener("click", initWebSocket);
+      // Mouse/Touch Klik support untuk tombol UI
+      document.querySelectorAll('.key').forEach(button => {
+        button.addEventListener('mousedown', function() {
+          const targetId = this.id;
+          if(targetId === "key-Up") sendCmd("maju");
+          if(targetId === "key-Down") sendCmd("mundur");
+          if(targetId === "key-Left") sendCmd("kiri");
+          if(targetId === "key-Right") sendCmd("kanan");
+          if(targetId === "key-Stop") sendCmd("stop");
+        });
+        button.addEventListener('mouseup', () => sendCmd("stop"));
+      });
+
+      // Polling Data Telemetri secara berkala dari ESP32 (Jarak & Warna)
+      setInterval(() => {
+        fetch('/telemetri')
+          .then(res => res.json())
+          .then(data => {
+            // Update UI Jarak
+            document.getElementById("ultra-val").innerHTML = `${data.jarak}<span style="font-size: 18px;"> cm</span>`;
+            let percent = Math.min(data.jarak * 4, 100); 
+            document.getElementById("ultra-bar").style.width = percent + "%";
+            document.getElementById("ultra-val").style.color = data.jarak < 15 ? "#ff4444" : "black";
+
+            // Update UI Warna asli durasi pulsa TCS3200
+            document.getElementById("rgb-raw").innerText = `R:${data.r} | G:${data.g} | B:${data.b}`;
+            
+            if (data.isManusia) {
+              document.getElementById("color-text").innerText = "TARGET: MANUSIA (RED)";
+              document.getElementById("color-text").style.color = "#ff4444";
+              document.getElementById("color-preview").style.backgroundColor = "#ff4444";
+            } else {
+              document.getElementById("color-text").innerText = "OBJECT DETECTED";
+              document.getElementById("color-text").style.color = "black";
+              document.getElementById("color-preview").style.backgroundColor = "#777777";
+            }
+          })
+          .catch(err => console.log("Gagal mengambil data sensor"));
+      }, 400); // Sinkronisasi setiap 400ms
     </script>
   </body>
 </html>
